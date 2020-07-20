@@ -20,18 +20,41 @@ class DigestForm
     public static function init()
     {
 
-        add_action('init', function () {
+        // add_action('init', function () {
 
-            if (!isset($_GET['dd'])) {
-                return;
-            }
+        //     if (!isset($_GET['dd'])) {
+        //         return;
+        //     }
 
-            // $url = 'https://wptavern.com/astra-becomes-the-only-non-default-wordpress-theme-with-1-million-installs';
-            $d = self::handler_load_image();
+        //     // $url = 'https://wptavern.com/astra-becomes-the-only-non-default-wordpress-theme-with-1-million-installs';
+        //     // $d = self::handler_load_image();
 
-            // $r = self::save_image_as_featured($post_id = 52776, $url_img = $d);
-            exit;
-        });
+        //     // $args = array(
+        //     //     'post_type' => 'attachment',
+        //     //     'posts_per_page' => 2000,
+        //     //     'date_query' => array(
+        //     //         array(
+        //     //             'after'     => '18.07.2020',
+        //     //             'before'    => '21.07.2020',
+        //     //             'inclusive' => true,
+        //     //         ),
+        //     //     ),
+        //     // );
+
+        //     // $posts = get_posts($args);
+        //     // foreach($posts as $post){
+
+        //     //     echo wp_get_attachment_image_url($post->ID);
+        //     //     echo '<hr>';
+
+        //     //     // wp_delete_attachment( $post->ID, $force_delete = true );
+
+
+        //     // }
+
+        //     // $r = self::save_image_as_featured($post_id = 52776, $url_img = $d);
+        //     exit;
+        // });
 
 
 
@@ -172,6 +195,11 @@ class DigestForm
 
         foreach ($posts as $post) {
 
+            if (get_post_thumbnail_id($post)) {
+                delete_post_meta($post->ID, 'wpc-digest-image-url-task');
+                continue;
+            }
+
             $url_post = get_post_meta($post->ID, 'ext-link-block', true);
 
 
@@ -180,10 +208,9 @@ class DigestForm
 
 
                 $r = self::save_image_as_featured($post->ID, $url_img);
-
-                var_dump($r);
-
-
+                if ($r) {
+                    delete_post_meta($post->ID, 'wpc-digest-image-url-task');
+                }
             }
         }
 
@@ -244,14 +271,24 @@ class DigestForm
             return;
         }
 
+        //check spam
+        if ('sc-hp' != $_POST['sc']) {
+            return;
+        }
+
         $post_data = [
             'ID'    => intval($_POST['post_id']) ? intval($_POST['post_id']) : '',
             'post_title'    => wp_strip_all_tags($_POST['title']),
             'post_content'  => esc_textarea($_POST['description']),
             'post_status'   => 'draft',
             'post_author'   => get_user_by('login', 'digestbot')->ID,
-            'post_category' => 'digest'
+            'post_category' => [get_term_by('slug', 'digest', 'category')->term_id]
         ];
+
+        if(is_user_logged_in()){
+            $post_data['post_status'] = 'publish';
+            $post_data['post_author'] = get_current_user_id();
+        }
 
         if (empty($post_data['post_title'])) {
             self::$errors[] = 'Пустой заголовок формы. Нужно указать заголовок';

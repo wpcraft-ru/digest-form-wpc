@@ -20,6 +20,7 @@ class DigestForm
     public static function init()
     {
 
+        // return;
         // add_action('init', function () {
 
         //     if (!isset($_GET['dd'])) {
@@ -235,10 +236,17 @@ class DigestForm
             'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
         ];
 
+
         $http = wp_remote_get($url, $args);
         $data = wp_remote_retrieve_body($http);
-        $dom = new \DOMDocument();
-        $dom->loadHTML($data);
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+
+        // $prev_libxml_use_internal_errors = libxml_use_internal_errors(true);
+
+        $dom->loadHTML($data, LIBXML_NOWARNING | LIBXML_NOERROR);
+
+        // libxml_clear_errors();
+
         $head = $dom->getElementsByTagName('head')->item(0);
         $meta_list = $head->getElementsByTagName("meta");
 
@@ -252,6 +260,8 @@ class DigestForm
         if (isset($url_image)) {
             return $url_image;
         }
+
+        // libxml_use_internal_errors($prev_libxml_use_internal_errors);
 
         return false;
         // foreach($links as $link){
@@ -267,12 +277,12 @@ class DigestForm
     }
     public static function form_handler()
     {
-        if ('/submit/' != $_POST['_wp_http_referer']) {
+        if ('/submit/' != @$_POST['_wp_http_referer']) {
             return;
         }
 
         //check spam
-        if ('sc-hp' != $_POST['sc']) {
+        if ('sc-hp' != @$_POST['sc']) {
             return;
         }
 

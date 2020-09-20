@@ -19,7 +19,13 @@ class DigestSubmitShortcode
 
             $data_args = self::get_data();
             ob_start();
-            Core::render('form-digest-submit.php', $data_args);
+
+            if (is_user_logged_in()) {
+                Core::render('form-digest-submit.php', $data_args);
+            } else {
+                Core::render('guest-redirect.php');
+            }
+
             $content = ob_get_clean();
             return $content;
         });
@@ -36,8 +42,8 @@ class DigestSubmitShortcode
     public static function post_contend_add_url($content)
     {
         $post = get_post();
-        
-        if( ! $url = get_post_meta($post->ID, 'url-main', true)){
+
+        if (!$url = get_post_meta($post->ID, 'url-main', true)) {
             return $content;
         }
 
@@ -96,10 +102,16 @@ class DigestSubmitShortcode
             return;
         }
 
+        $post_content = '<!-- wp:paragraph -->';
+        $post_content .= '<p>';
+        $post_content .= esc_textarea($_POST['description']);
+        $post_content .= '</p>';
+        $post_content .= '<!-- /wp:paragraph -->';
+
         $post_data = [
             'ID'    => intval($_GET['id']) ? intval($_GET['id']) : '',
             'post_title'    => wp_strip_all_tags($_POST['title']),
-            'post_content'  => esc_textarea($_POST['description']),
+            'post_content'  => $post_content,
             'post_author'   => get_user_by('login', 'digestbot')->ID,
             'post_category' => [get_term_by('slug', 'digest', 'category')->term_id],
             'comment_status' => 'open'
@@ -135,12 +147,12 @@ class DigestSubmitShortcode
 
         if (!empty($_POST['save'])) {
             $status = get_post_status($post_data['ID']);
-            if($status != 'publish'){
+            if ($status != 'publish') {
                 $post_data['post_status'] = 'draft';
             } else {
                 $post_data['post_status'] = 'publish';
             }
-        } 
+        }
 
         if (!empty($_POST['publish'])) {
             $post_data['post_status'] = 'publish';
@@ -148,7 +160,7 @@ class DigestSubmitShortcode
 
         $post_id = wp_insert_post(wp_slash($post_data));
 
-        if(empty($_POST['additional-enable'])){
+        if (empty($_POST['additional-enable'])) {
             delete_post_meta($post_id, 'additional-enable');
         } else {
             update_post_meta($post_id, 'additional-enable', 1);
@@ -162,10 +174,9 @@ class DigestSubmitShortcode
             update_post_meta($post_id, 'url-main', $url);
 
             $image_url = self::get_url_image_from_meta_tags($url);
-
         }
 
-        if(!empty($image_url)){
+        if (!empty($image_url)) {
             $image_featured = self::save_image_as_featured($post_id, $image_url);
 
             // dd($image_featured);
@@ -301,7 +312,6 @@ class DigestSubmitShortcode
         // libxml_use_internal_errors($prev_libxml_use_internal_errors);
 
         return false;
-     
     }
 
     public static function get_data()
@@ -332,6 +342,23 @@ class DigestSubmitShortcode
                 'post_content' => $post->post_content,
                 'url' => get_post_meta($post->ID, 'ext-link-block', true),
             ];
+
+            
+            if($blocks = parse_blocks($post->post_content)){
+                $content = '';
+                foreach($blocks as $block){
+
+                    $content .= $block['innerHTML'] . PHP_EOL;
+
+                }
+
+                $content = wp_strip_all_tags($content);
+            }
+
+            if(!empty($content)){
+                $data['post_content'] = $content;
+            }
+
 
             if ($categories = wp_get_post_categories($post->ID, ['fields' => 'all'])) {
 

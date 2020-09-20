@@ -34,7 +34,9 @@ class Core {
             extract( $data ); 
         }
 
-        $path = self::get_file_path("templates/form-digest-submit.php");
+        $path = sprintf("templates/%s", $path);
+
+        $path = self::get_file_path($path);
 
         $template = file_exists( $path ) ? $path : '';
 

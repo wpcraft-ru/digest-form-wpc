@@ -2,9 +2,8 @@
 /*
 * Plugin Name: FrontEditor by uptimizt
 * Description: Digest form, full editor
-* Author: uptimnizt
-* GitHub Plugin URI: wpcraft-ru/front-editor
-* Version: 0.1
+* Author: uptimizt
+* Version: 0.2
 */
 
 namespace U7\FrontEditor;

@@ -19,6 +19,8 @@ class DigestSubmitShortcode
 
             $data_args = self::get_data();
 
+            require_once ABSPATH .'/wp-admin/includes/template.php';
+
             ob_start();
 
             if (is_user_logged_in()) {
@@ -326,7 +328,9 @@ class DigestSubmitShortcode
             'nonce' => wp_create_nonce('digest-submit-form')
         ];
 
-        $post = get_post(intval($_GET['id']));
+        if($post_id = intval($_GET['id'])){
+            $post = get_post($post_id);
+        }
 
         if (empty($post)) {
             $data = [

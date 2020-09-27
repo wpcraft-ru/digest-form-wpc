@@ -18,6 +18,7 @@ class DigestSubmitShortcode
         add_shortcode(self::$shortcode_name, function () {
 
             $data_args = self::get_data();
+
             ob_start();
 
             if (is_user_logged_in()) {
@@ -166,6 +167,8 @@ class DigestSubmitShortcode
             update_post_meta($post_id, 'additional-enable', 1);
         }
 
+        update_post_meta($post_id, 'front-editor', 1);
+
         self::$success['id'] = $post_id;
 
         if (!empty($_POST['post_url'])) {
@@ -177,9 +180,11 @@ class DigestSubmitShortcode
         }
 
         if (!empty($image_url)) {
-            $image_featured = self::save_image_as_featured($post_id, $image_url);
 
-            // dd($image_featured);
+            if(! has_post_thumbnail($post_id)){
+                $image_featured = self::save_image_as_featured($post_id, $image_url);
+            }
+
         }
 
 
@@ -321,11 +326,7 @@ class DigestSubmitShortcode
             'nonce' => wp_create_nonce('digest-submit-form')
         ];
 
-        if (isset($_GET['id']) && $post = get_post($_GET['id'])) {
-            $data['id'] = intval($_GET['id']);
-        } else {
-            $data['id'] = '';
-        }
+        $post = get_post(intval($_GET['id']));
 
         if (empty($post)) {
             $data = [
@@ -338,9 +339,12 @@ class DigestSubmitShortcode
             ];
         } else {
             $data = [
+                'post_id' => $post->ID,
                 'post_title' => $post->post_title,
                 'post_content' => $post->post_content,
                 'url' => get_post_meta($post->ID, 'ext-link-block', true),
+                'post_permalink' => get_permalink($post->ID),
+
             ];
 
             

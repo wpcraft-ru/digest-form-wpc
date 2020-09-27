@@ -2,6 +2,11 @@
 
     <?php do_action('form-submit-topic-before-fields') ?>
 
+    <input type="hidden" id="nonce" name="nonce" value="<?= $nonce ?>">
+    <input type="hidden" name="_wp_http_referer" value="/editor/">
+    <input type="hidden" name="id" value="<?= $post_id ?>">
+    <input type="hidden" id="post-image" name="og-image" value="">
+
 
     <p class="form-row form-row-wide">
         <label for="post-title">Заголовок</label>
@@ -16,6 +21,13 @@
             <textarea name="description" id="post-desc" rows="8" placeholder="Текст" required=""><?= $post_content ?></textarea>
         </span>
     </p>
+
+    <?php if( ! empty($post_permalink)) : ?>
+        <p class="form-row form-row-wide">
+            <a href="<?= $post_permalink ?>" target="_blank" rel="noopener noreferrer">Посмотреть</a>
+        </p>
+
+    <?php endif; ?>
 
 
     <div class="editor-form--additional-wrapper mb-4 bg-gray-200 p-3 mt-3">
@@ -81,10 +93,7 @@
     </div>
 
 
-    <input type="hidden" id="nonce" name="nonce" value="<?= $nonce ?>">
-    <input type="hidden" name="_wp_http_referer" value="/editor/">
-    <input type="hidden" name="id" value="<?= $post_id ?>">
-    <input type="hidden" id="post-image" name="og-image" value="">
     <input type="submit" name="save" class="btn" value="Сохранить">
     <input type="submit" name="publish" class="btn" value="Опубликовать">
+    <a href="/editor/" class="btn">Новый пост</a>
 </form>

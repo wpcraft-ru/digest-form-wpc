@@ -23,7 +23,10 @@ class DigestSubmitShortcode
 
             ob_start();
 
-            if (is_user_logged_in()) {
+            if (is_user_logged_in() ) {
+
+                // $d = current_user_can('block');
+                // var_dump($d); exit;
                 Core::render('form-digest-submit.php', $data_args);
             } else {
                 Core::render('guest-redirect.php');
@@ -333,14 +336,18 @@ class DigestSubmitShortcode
         }
 
         if (empty($post)) {
+
+            $category_default_id = get_term_by('slug', 'digest', 'category')->term_id;
+
             $data = [
                 'post_title' => '',
                 'post_content' => '',
                 'url' => '',
                 "terms_checklist_args" => [
-                    'selected_cats' => [88]
+                    'selected_cats' => [$category_default_id]
                 ]
             ];
+
         } else {
             $data = [
                 'post_id' => $post->ID,

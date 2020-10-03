@@ -23,7 +23,7 @@ class DigestSubmitShortcode
 
             ob_start();
 
-            if (current_user_can('customer') || current_user_can('author') ) {
+            if (current_user_can('customer') || current_user_can('publish_posts') ) {
                 Core::render('form-digest-submit.php', $data_args);
             } else {
                 Core::render('guest-redirect.php');

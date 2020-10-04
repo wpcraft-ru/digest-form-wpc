@@ -15,23 +15,7 @@ class DigestSubmitShortcode
 
     public static function init()
     {
-        add_shortcode(self::$shortcode_name, function () {
-
-            $data_args = self::get_data();
-
-            require_once ABSPATH .'/wp-admin/includes/template.php';
-
-            ob_start();
-
-            if (current_user_can('customer') || current_user_can('publish_posts') ) {
-                Core::render('form-digest-submit.php', $data_args);
-            } else {
-                Core::render('guest-redirect.php');
-            }
-
-            $content = ob_get_clean();
-            return $content;
-        });
+        add_shortcode(self::$shortcode_name, [__CLASS__, 'shortcode_render']);
 
         add_action('wp', [__CLASS__, 'form_handler']);
 
@@ -41,6 +25,53 @@ class DigestSubmitShortcode
 
         add_filter('the_content', [__CLASS__, 'post_contend_add_url']);
     }
+
+    public static function shortcode_render(){
+
+        $data_args = self::get_data();
+
+        require_once ABSPATH .'/wp-admin/includes/template.php';
+
+        ob_start();
+
+        if ( ! current_user_can('publish_posts') ) {
+            Core::render('guest-redirect.php');
+            $content = ob_get_clean();
+            return $content;
+        }
+
+
+        if(empty($_GET['type']) && current_user_can('edit_others_posts')){
+            Core::render('form-editor.php', $data_args);
+            $content = ob_get_clean();
+            return $content;
+        }
+
+
+        if(!empty($data_args['post_id']) &&  ! current_user_can('edit_post', $data_args['post_id']) ){
+            printf('<p>%s</p>', 'Хакер чтоли?');
+            $content = ob_get_clean();
+            return $content;
+        }
+    
+        switch ($_GET['type']) {
+            case 'digest':
+                Core::render('form-digest-submit.php', $data_args);
+                break;
+            
+            case 'disquss':
+                Core::render('form-disquss.php', $data_args);
+                break;
+            
+            default:
+            Core::render('form-digest-submit.php', $data_args);
+            break;
+        }
+
+        $content = ob_get_clean();
+        return $content;
+    }
+
 
     public static function post_contend_add_url($content)
     {
@@ -149,12 +180,7 @@ class DigestSubmitShortcode
         }
 
         if (!empty($_POST['save'])) {
-            $status = get_post_status($post_data['ID']);
-            if ($status != 'publish') {
-                $post_data['post_status'] = 'draft';
-            } else {
-                $post_data['post_status'] = 'publish';
-            }
+            $post_data['post_status'] = 'draft';
         }
 
         if (!empty($_POST['publish'])) {
@@ -199,8 +225,7 @@ class DigestSubmitShortcode
             wp_set_post_tags($post_id, []);
         }
 
-
-        $url_redirect = site_url('editor');
+        $url_redirect = site_url($_SERVER['REQUEST_URI']);
         $url_redirect = add_query_arg('id', $post_id, $url_redirect);
         wp_redirect($url_redirect);
     }
